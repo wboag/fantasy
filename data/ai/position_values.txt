@@ -1,0 +1,186 @@
+DL
+   7 safety_md
+  16 pass_att
+  16 pass_cmp
+  16 punt_ret
+  16 punt_ret_td
+  16 pass_yds
+  16 pass_sacked
+  16 pass_int
+  16 pass_sacked_yds
+  16 punt_ret_yds
+  16 pass_td
+  23 rush_yds
+  23 rush_att
+  23 rush_td
+  31 kick_ret_yds
+  31 kick_ret
+  31 kick_ret_td
+ 135 def_int
+ 135 def_int_td
+ 135 def_int_yds
+ 249 all_td
+ 249 scoring
+3716 tackles_assists
+3716 tackles_solo
+
+LB
+   1 age
+   2 safety_md
+  14 kick_ret_yds
+  14 kick_ret
+  14 kick_ret_td
+  16 pass_att
+  16 pass_sacked
+  16 rush_yds
+  16 pass_cmp
+  16 rush_att
+  16 punt_ret
+  16 punt_ret_td
+  16 pass_yds
+  16 pass_int
+  16 pass_sacked_yds
+  16 rush_td
+  16 punt_ret_yds
+  16 pass_td
+  26 rec_td
+  26 targets
+  26 rec
+  26 rec_yds
+ 192 all_td
+ 192 scoring
+ 762 def_int
+ 762 def_int_td
+ 762 def_int_yds
+2760 tackles_assists
+2760 tackles_solo
+
+K
+  32 pass_int
+  32 pass_td
+  32 pass_cmp
+  32 rush_att
+  32 pass_yds
+  32 rush_yds
+  32 pass_sacked_yds
+  32 pass_sacked
+  32 rush_td
+  32 pass_att
+  74 punt
+  74 punt_blocked
+  74 punt_yds
+ 409 fgm
+ 435 fga
+ 454 xpm
+ 464 xpa
+ 496 scoring
+ 496 all_td
+
+DB
+  32 rush_yds
+  32 rush_att
+  32 rush_td
+ 204 kick_ret_yds
+ 204 kick_ret
+ 204 kick_ret_td
+ 333 punt_ret_yds
+ 333 punt_ret
+ 333 punt_ret_td
+ 377 scoring
+ 377 all_td
+2335 def_int
+2335 def_int_yds
+2335 def_int_td
+4078 tackles_assists
+4078 tackles_solo
+
+QB
+  10 two_pt_md
+ 128 rec
+ 128 rec_td
+ 128 targets
+ 128 rec_yds
+ 400 scoring
+ 400 all_td
+ 627 rush_yds
+ 627 rush_att
+ 627 rush_td
+ 632 pass_int
+ 632 pass_cmp
+ 632 pass_td
+ 632 pass_yds
+ 632 pass_sacked_yds
+ 632 pass_sacked
+ 632 pass_att
+
+WR
+  21 two_pt_md
+  33 def_int
+  33 def_int_td
+  33 def_int_yds
+  85 tackles_assists
+  85 tackles_solo
+ 182 pass_att
+ 182 pass_cmp
+ 182 pass_sacked
+ 182 pass_int
+ 182 pass_sacked_yds
+ 182 pass_yds
+ 182 pass_td
+ 647 punt_ret
+ 647 punt_ret_td
+ 647 punt_ret_yds
+ 878 kick_ret_yds
+ 878 kick_ret
+ 878 kick_ret_td
+1085 rush_yds
+1085 rush_att
+1085 rush_td
+1950 all_td
+1950 scoring
+2469 rec_td
+2469 targets
+2469 rec
+2469 rec_yds
+
+RB
+  10 two_pt_md
+  51 tackles_assists
+  51 tackles_solo
+  69 pass_sacked_yds
+  69 pass_att
+  69 pass_cmp
+  69 pass_yds
+  69 pass_sacked
+  69 pass_int
+  69 pass_td
+ 124 punt_ret
+ 124 punt_ret_td
+ 124 punt_ret_yds
+ 611 kick_ret_yds
+ 611 kick_ret
+ 611 kick_ret_td
+1132 all_td
+1132 scoring
+1475 rec_td
+1475 targets
+1475 rec
+1475 rec_yds
+1517 rush_yds
+1517 rush_att
+1517 rush_td
+
+TE
+   9 two_pt_md
+  96 rush_yds
+  96 rush_td
+  96 rush_att
+ 165 kick_ret_yds
+ 165 kick_ret
+ 165 kick_ret_td
+ 944 scoring
+ 944 all_td
+1257 rec_td
+1257 rec
+1257 rec_yds
+1257 targets
