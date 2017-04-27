@@ -61,7 +61,10 @@ simple_positions = {
 
 class FantasyTeam:
 
-    def __init__(self, year):
+    def __init__(self, name, year):
+        # identifier
+        self._id = name
+
         # active roster + bench
         self._size = 20
 

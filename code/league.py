@@ -27,6 +27,14 @@ random.seed(5)
 
 def main():
 
+    auto = League('2016')
+    teams = ['Buffy', 'Xander', 'Willow', 'Spike', 'Oz', 'Giles', 'Tara', 'Anya', 'Angel', 'Dawn']
+    auto.draft(teams)
+
+    auto.run()
+
+    exit()
+
     # where to build pre-built league
     league_dir = sys.argv[1]
 
@@ -88,6 +96,107 @@ class League:
             print 
         '''
 
+    def draft(self, teams, weeks=17, schedule=None):
+
+        # number of weeks in the season
+        self._weeks = weeks
+
+        # assemble the collection of teams in the league
+        for roster_name in teams:
+            # build team
+            team = ff_team.FantasyTeam(roster_name, self._year)
+
+            # build Agent to manage the team
+            agent = Agent(team)
+
+            # owner id
+            owner = roster_name
+
+            assert owner not in self._teams, Exception('two teams with the same owner')
+            self._teams[owner] = agent
+
+        # logistics
+        self._week = 1
+        self._standings = {owner:[0,0,0] for owner in self._teams.keys()}
+
+        # Draft
+
+
+        # get info from last year (to know who to draft)
+        last_year_players = {}
+        previous_year = str(int(self._year)-1)
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        data_dir = os.path.join(base_dir, 'data')
+        names_file = os.path.join(data_dir, previous_year, 'meta', 'names_index')
+        players_dir = os.path.join(data_dir, previous_year, 'raw', 'players')
+        with open(names_file, 'r') as f:
+            i = 0
+            for line in f.readlines():
+                i += 1
+                #if i >= 300:
+                #    break
+                pid = line.split()[0]
+                #if pid != 'bradto00': continue
+                name,position,team = line.strip().split('\t')[1].split('||')
+                player_file = os.path.join(players_dir, pid)
+                p = Player(player_file)
+                #p = (name,position,team)
+                if p.position() in ff_team.simple_positions:
+                    #pos = ff_team.simple_positions[p.position()]
+                    last_year_players[pid] = p
+
+        # TODO: holds information about which players were best at each position
+        last_year = {}
+        for week in range(1,18):
+            weekly_standings = {pos:{} for pos in ff_team.simple_positions.values()}
+            for pid,p in last_year_players.items():
+                position = ff_team.simple_positions[p.position()]
+                stats = p.stats(week)
+                score = p.score(week)
+                vals = []
+                for stat in position_stats[position]:
+                    # this at least lets the (dumb) AI understand importance
+                    #vals.append(stats[stat])
+                    #vals.append(stats[stat] * math.sign(plays[stat]))
+                    vals.append(stats[stat] * plays[stat])
+                weekly_standings[position][p.id()] = vals, p
+            last_year[week] = weekly_standings
+
+
+        # TODO: randomly determine draft order
+        draft_order = teams
+
+        #print 'DRAFTING'
+
+        # allow agents to update rosters
+        env = [self._players, None]
+        i = 0
+        for i in range(self._teams.values()[0]._team._size):
+            for owner in draft_order:
+                self._teams[owner].draft_step(env, last_year)
+
+        #print 'DONE DRAFTING'
+        #print self._teams
+
+        def back_one_year(p):
+            pid = p.id()
+            last_year_p = last_year_players[pid]
+            return last_year_p
+
+        # every team must set their lineup with the new players
+        owners = self._teams.keys()
+        for owner in owners:
+            self._teams[owner].set_lineup(week=17, player_map=back_one_year)
+
+        # number of weeks in the season
+        assert schedule == None # I dont plan on adding this for a while, if ever
+        if schedule:
+            self._schedule = schedule
+        else:
+            self._schedule = self.generate_schedule(self._teams.keys(), self._weeks)
+
+
+
 
     def load_from_dir(self, league_dir):
         # metadata
@@ -111,7 +220,7 @@ class League:
 
             # build team
             roster_file = os.path.join(league_dir, roster_name)
-            team = ff_team.FantasyTeam(year)
+            team = ff_team.FantasyTeam(roster_name, year)
             team.load_from_file(roster_file)
 
             # all players owned by this agent are now unavailable
@@ -139,6 +248,7 @@ class League:
 
     def generate_schedule(self, teams, weeks):
         ''' this is not generated with divisions or fairness/eveness '''
+        assert len(teams) % 2 == 0
         n = len(teams)/2
 
         schedule = {}
@@ -199,6 +309,8 @@ class League:
             i = 0
             while len(active) > 0 and (i<5):
                 # agents who are not done get re-added to the queue
+                if i==0:
+                    print 'active: ', active
                 new_active = []
                 for owner,record in active:
                     done = self._teams[owner].update(week, record, env)
@@ -212,6 +324,13 @@ class League:
             for owner in owners:
                 self._teams[owner].set_lineup(week)
 
+        # Save state (for analysis)
+
+        # TODO: analyze what the winning agents did well
+        #     - what do their feature vectors look like?
+        #     * Cluster the features (look at their rank, points scored, above/below avg)
+        #     * Create an ML problem to rank feature vector (binary: is this one better?)
+        #     - I want to try putting a prior over the feature vectors & observe success
 
 
     def run_week(self, week):

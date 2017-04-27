@@ -91,9 +91,131 @@ class Agent:
         return self._team.score(week)
 
 
+    def draft_step(self, env, last_year):
+
+        # TODO: how to evaluate players to draft
+        # solution: use previous year, though rookies have no data to go from
+
+        # what FA players are the best for each position?
+        available = env[0]['available']
+        scores = last_year_eval(last_year, available, self._position_stat_weights)
+
+        upgrades = {}
+        for pos,need in roster_spots.items():
+            best = top_available(scores[pos], 2)
+            upgrades[pos] = best
+
+        # how good are your own players?
+        current_scores = {pos:{} for pos in set(ff_team.simple_positions.values())}
+        for p in self._team.players():
+            pos = ff_team.simple_positions[p.position()]
+
+            pid = p.id()
+
+            # each of the previous self._history number of weeks
+            u = 0.0
+            for week in range(1,18):
+                old_p = last_year[week][pos][pid][1]
+
+                u += utility(old_p, [week], self._history, self._position_stat_weights, 
+                             self._history_weights)
+            current_scores[pos][p.id()] = u
+
+        current = {}
+        for pos,scores in current_scores.items():
+            current[pos] = sorted(scores.items(), key=lambda t:t[1])
+
+        '''
+        for pos in current.keys():
+            print pos
+            for pid,u in sorted(current[pos], key=lambda t:t[1]):
+                print '\t%5.3f %s' % (u,pid)
+            print
+        print 
+        print '---'
+        print
+
+        for pos in upgrades.keys():
+            print pos
+            for pid,u in sorted(upgrades[pos], key=lambda t:t[1]):
+                print '\t%5.3f %s' % (u,pid)
+            print
+        print 
+        print '---'
+        print
+        '''
+
+        # which acquisitions would really help?
+        improvements = []
+        for pos in upgrades.keys():
+            # first make sure you have covered every position of need
+            #print '\n\n\n'
+            #print 'CAND:', pos
+            if not is_needed(pos, current): 
+                #print '\tCAND:', pos
+                #print '\tNOT NEEDED'
+                continue
+
+            # who is the current worst player at that position?
+            left = [(p,s) for (p,s) in current[pos]]
+            if len(left) == 0:
+                for candidate,score in upgrades[pos]:
+                    improvements.append((pos,candidate,None,score))
+            else:
+                worst_pid,worst_owned = sorted(left, key=lambda t:t[1])[0]
+
+                # how much upgrade value does the new position add?
+                for candidate,score in upgrades[pos]:
+                    advantage_over_current = score - worst_owned
+                    improvements.append((pos,candidate,None,advantage_over_current))
+
+                    # get the new worst player
+                    left = [(p,s) for (p,s) in current[pos]]
+                    worst_pid,worst_owned = sorted(left, key=lambda t:t[1])[0]
+
+        improvements = sorted(improvements, key=lambda t:-t[-1])
+
+        # will any additions help?
+        #if not improvements:
+        #    done = True
+        #    return done
+
+        # do the most helpful improvement
+        pos,new_pid,old_pid,up = improvements[0]
+
+        '''
+        print self._team._id
+        print pos
+        print new_pid
+        print old_pid
+        print up
+        print
+        '''
+
+        # release old player
+        if old_pid is not None:
+            old_p = env[0]['taken'][old_pid]
+            self._team.drop_player(old_p)
+            del env[0]['taken'][old_pid]
+            env[0]['available'][old_pid] = old_p
+
+        # add new player
+        new_p = env[0]['available'][new_pid]
+        self._team.add_player(new_p)
+        del env[0]['available'][new_pid]
+        env[0]['taken'][new_pid] = new_p
+
+        done = False
+        return done
+
+
+
     def update(self, week, record, env):
 
         # TODO - release IR people
+        #for player in self._team.players():
+        #    print player
+        #exit()
 
         # TODO - use multiple previous weeks of history
         # what FA players are the best for each position?
@@ -112,7 +234,7 @@ class Agent:
             pos = ff_team.simple_positions[p.position()]
 
             # each of the previous self._history number of weeks
-            u = utility(p, week, self._history, self._position_stat_weights, 
+            u = utility(p, [week], self._history, self._position_stat_weights, 
                         self._history_weights)
 
             current_scores[pos][p.id()] = u
@@ -184,7 +306,7 @@ class Agent:
 
 
 
-    def set_lineup(self, week):
+    def set_lineup(self, week, player_map=lambda x:x):
         #print self._team
 
         # its easiest to start with just deactivating everyone & let them all earn it
@@ -193,8 +315,15 @@ class Agent:
 
         # determine how much you like each player
         def eval_player(pp):
-            return utility(pp, week, self._history, 
+            transformed_player = player_map(pp) # useful for going back a year
+            return utility(pp, [week], self._history, 
                            self._position_stat_weights, self._history_weights)
+
+        '''
+        print 
+        for p in self._team._players:
+            print p
+        '''
 
         # set lineup
         active = set()
@@ -213,6 +342,10 @@ class Agent:
 
             #print pos, candidates
             #if len(candidates) == 0: continue
+            #print self._team._id
+            #print pos
+            #print candidates
+            #print
 
             # pick the best player of the available ones
             scores = map(eval_player, candidates)
@@ -222,6 +355,24 @@ class Agent:
             # add that player to the active roster
             self._team.set_roster(pos, best)
             active.add(best.id())
+
+
+
+
+def last_year_eval(stats, available, position_stat_weights):
+    best = {pos:defaultdict(float) for pos in position_stat_weights.keys()}
+    for week in stats.keys():
+        for pos in stats[week].keys():
+            for pid,(week_stats,p) in stats[week][pos].items():
+                if pid not in available:
+                    continue
+
+                player = available[pid]
+                fantasy_score = available[pid].score(week)
+                feats = week_stats + [fantasy_score]
+                week_utility = np.dot(feats, position_stat_weights[pos])
+                best[pos][pid] += week_utility
+    return {k:dict(v) for k,v in best.items()}
 
 
 
@@ -248,13 +399,13 @@ def top_available(week_scores, N):
 
 
 
-def utility(p, week, history, position_stat_weights, history_weights):
+def utility(p, weeks, history, position_stat_weights, history_weights):
     # TODO - compute utility with multiple weeks back as well
     pos = ff_team.simple_positions[p.position()]
     score = 0.0
-    for i,w in enumerate([week]):
-        stats = p.stats(week)
-        fantasy_score = p.score(week)
+    for i,w in enumerate(weeks):
+        stats = p.stats(w)
+        fantasy_score = p.score(w)
 
         # compute how highly this agent rates that player
         feats = [stats[s] for s in position_stats[pos]] + [fantasy_score]
@@ -263,3 +414,58 @@ def utility(p, week, history, position_stat_weights, history_weights):
     return score
 
 
+
+def is_needed(pos, current):
+    required = defaultdict(int)
+    for p in ff_team.fantasy_positions:
+        p = re.sub('[12]', '', p)
+        required[p] += 1
+    #print required
+    #print 'current:', current
+    #print pos
+    #print current[pos], required[pos]
+    is_satisfied = len(current[pos]) == required[pos]
+    #print 'is_satisfied:', is_satisfied
+
+    if not is_satisfied:
+        return True
+
+    is_others_remaining = False
+    for p in current:
+        #print '\t', p, current[p], required[p]
+        if len(current[p]) < required[p]:
+            is_others_remaining = True
+
+    #print 'is_others_remaining:', is_others_remaining
+    #print 
+
+    # if youre satisfied, but others still need more, then you are not needed
+    if is_others_remaining:
+        return False
+
+    # check the flex (should be 6 people available between WR, RB, and TE)
+    maps_to_flex = []
+    for op,possible in ff_team.position_casts.items():
+        if 'FLEX' in possible:
+            maps_to_flex.append(op)
+
+    N = 1  # one for the FLEX :)
+    for p,req in required.items():
+        if p in maps_to_flex:
+            N += req
+    current_N = 0
+    for p,cur in current.items():
+        if p in maps_to_flex:
+            current_N += len(cur)
+    #print N
+    #print current_N
+    if current_N < N:
+        #print 'is_satisfied (FLEX):', is_satisfied
+        if pos in maps_to_flex:
+            return True    # we need you for the flex!
+        else:
+            return False   # let someone else go if they could actually help
+
+
+    # sure! you made it here, so everyone is good to go!
+    return True
