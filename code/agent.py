@@ -73,7 +73,8 @@ class Agent:
         # generate parameters that govern how it behaves in update() and manages itself
 
         # how much weight to give to previous weeks when deciding player's value
-        self._history = np.random.randint(6) + 1
+        #self._history = np.random.randint(6) + 1
+        self._history = 4
         self._history_weights = np.random.rand(self._history)
         self._history_weights /= self._history_weights.sum()
 
