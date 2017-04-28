@@ -86,7 +86,10 @@ class Player:
 
 
     def stats(self, week):
-        return self._stats[week]
+        ret = defaultdict(float)
+        if week in self._stats:
+            ret.update(self._stats[week])
+        return ret
 
 
     def score(self, week):
@@ -287,7 +290,7 @@ def read_stats(text):
     <td class="right " data-stat="scoring" >0</td>
     '''
 
-    return stats
+    return { k:dict(v) for k,v in stats.items() }
 
 
 
