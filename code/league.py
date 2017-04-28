@@ -5,6 +5,8 @@ import re
 from collections import namedtuple, defaultdict
 import random
 import math
+import time
+import cPickle as pickle
 
 
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -33,6 +35,15 @@ def main():
 
     auto.run()
 
+    # Save state (for analysis)
+    parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    results_dir = os.path.join(parent_dir, 'results')
+    name = '%d.league' % time.time()
+    results_name = os.path.join(results_dir, name)
+    print 'serializing: ', results_name
+    with open(results_name, 'wb') as f:
+        pickle.dump(auto, f)
+
     exit()
 
     # where to build pre-built league
@@ -44,6 +55,7 @@ def main():
 
     # simulate season
     ps.run()
+
 
 
 
@@ -60,6 +72,7 @@ class League:
         # things that are updated as the season progresses
         self._week = 0
         self._standings = {}
+        self._breakdown = {}
 
         # pool of ALL football players for that year
         self._players = {'available':{}, 'taken':{}}
@@ -118,6 +131,7 @@ class League:
         # logistics
         self._week = 1
         self._standings = {owner:[0,0,0] for owner in self._teams.keys()}
+        self._breakdown = {owner:[0,0,0] for owner in self._teams.keys()}
 
         # Draft
 
@@ -244,6 +258,7 @@ class League:
         # ready to begin season!
         self._week = 1
         self._standings = {owner:[0,0,0] for owner in self._teams.keys()}
+        self._breakdown = {owner:[0,0,0] for owner in self._teams.keys()}
 
 
     def generate_schedule(self, teams, weeks):
@@ -324,14 +339,6 @@ class League:
             for owner in owners:
                 self._teams[owner].set_lineup(week)
 
-        # Save state (for analysis)
-
-        # TODO: analyze what the winning agents did well
-        #     - what do their feature vectors look like?
-        #     * Cluster the features (look at their rank, points scored, above/below avg)
-        #     * Create an ML problem to rank feature vector (binary: is this one better?)
-        #     - I want to try putting a prior over the feature vectors & observe success
-
 
     def run_week(self, week):
         ''' how did everyone do this week? '''
@@ -352,6 +359,24 @@ class League:
                 else:
                     self._standings[owner1][2] += 1 # tie
                     self._standings[owner2][2] += 1 # tie
+
+        # Regular Season
+        #if self._week < 14:
+        if True:
+            for owner1 in self._teams:
+                for owner2 in self._teams:
+                    if owner1 == owner2: continue
+                    comp = self.head_to_head(owner1, owner2)
+                    if comp < 0:
+                        self._breakdown[owner1][1] += 1 # loss
+                        self._breakdown[owner2][0] += 1 # win
+                    elif comp > 0:
+                        self._breakdown[owner1][0] += 1 # loss
+                        self._breakdown[owner2][1] += 1 # win
+                    else:
+                        self._breakdown[owner1][2] += 1 # tie
+                        self._breakdown[owner2][2] += 1 # tie
+
 
         '''
         # Wild Card round
@@ -477,6 +502,24 @@ def load_metadata(league_dir):
     meta['schedule'] = None
 
     return meta
+
+
+
+def get_ranks(standings):
+    ordered = sorted(standings.items(), cmp=cmp_record, reverse=True)
+
+    r = 0
+    current = ordered[0][1]
+
+    rank = {}
+    for i,name_standing in enumerate(ordered):
+        name,standing = name_standing
+        if standing != current:
+            r = i
+            current = standing
+        rank[name] = 10-r
+
+    return rank
 
 
 
