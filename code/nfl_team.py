@@ -105,9 +105,9 @@ def main():
 
     real_week = team_to_real_week('2016', team, team_week)
 
-    print 'team:      ', team
-    print 'team week: ', team_week
-    print 'real weel: ', real_week
+    print('team:      ', team)
+    print('team week: ', team_week)
+    print('real weel: ', real_week)
 
 
 

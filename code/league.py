@@ -6,7 +6,7 @@ from collections import namedtuple, defaultdict
 import random
 import math
 import time
-import cPickle as pickle
+import pickle
 
 
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -40,7 +40,7 @@ def main():
     results_dir = os.path.join(parent_dir, 'results')
     name = '%d.league' % time.time()
     results_name = os.path.join(results_dir, name)
-    print 'serializing: ', results_name
+    print('serializing: ', results_name)
     with open(results_name, 'wb') as f:
         pickle.dump(auto, f)
 
@@ -185,7 +185,7 @@ class League:
         # allow agents to update rosters
         env = [self._players, None]
         i = 0
-        for i in range(self._teams.values()[0]._team._size):
+        for i in range(list(self._teams.values())[0]._team._size):
             for owner in draft_order:
                 self._teams[owner].draft_step(env, last_year)
 
@@ -207,7 +207,8 @@ class League:
         if schedule:
             self._schedule = schedule
         else:
-            self._schedule = self.generate_schedule(self._teams.keys(), self._weeks)
+            teams = list(self._teams.keys())
+            self._schedule = self.generate_schedule(teams, self._weeks)
 
 
 
@@ -264,7 +265,7 @@ class League:
     def generate_schedule(self, teams, weeks):
         ''' this is not generated with divisions or fairness/eveness '''
         assert len(teams) % 2 == 0
-        n = len(teams)/2
+        n = int(len(teams)/2)
 
         schedule = {}
         #for i in range(weeks-3):   # remember, 3 weeks are for playoffs
@@ -284,10 +285,10 @@ class League:
 
     def run(self):
 
-        print '\n'
-        print 'week 0'
-        print self
-        print '\n'
+        print('\n')
+        print('week 0')
+        print(self)
+        print('\n')
 
         # keeps track of which players did best each week
         # useful for Agents deciding which pickups to make
@@ -303,10 +304,10 @@ class League:
             # combine this week into this history of all standings
             standings.append(weekly_standings)
 
-            print '\n'
-            print 'week %d' % week
-            print self
-            print '\n'
+            print('\n')
+            print('week %d' % week)
+            print(self)
+            print('\n')
 
             '''
             print 
@@ -320,12 +321,12 @@ class League:
             # Note: by going in standings order, we simulate the waiver wire
             # allow agents to update rosters
             env = [self._players, standings]
-            active = sorted(self._standings.items(), cmp=record_cmp)
+            active = sorted(self._standings.items(), key=key_record)
             i = 0
             while len(active) > 0 and (i<5):
                 # agents who are not done get re-added to the queue
-                if i==0:
-                    print 'active: ', active
+                #if i==0:
+                #    print('active: ', active)
                 new_active = []
                 for owner,record in active:
                     done = self._teams[owner].update(week, record, env)
@@ -439,7 +440,7 @@ class League:
         # Regular Season
         #if self._week < 14:
         if True:
-            standings = sorted(self._standings.items(),cmp=record_cmp, reverse=True)
+            standings = sorted(self._standings.items(), key=key_record, reverse=True)
             for i,(owner,record) in enumerate(standings):
                 record_str = '-'.join(map(str,record))
                 ret.append('\t%2d. %-8s (%s)' % (i+1,owner,record_str))
@@ -467,6 +468,8 @@ class League:
 
 
 
+def key_record(tup):
+    return tup[1][0]*1000 + tup[1][1]
 
 
 def record_cmp(tup_a,tup_b):

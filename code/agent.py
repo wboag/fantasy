@@ -15,14 +15,13 @@ def build_position_stats():
     position_stats_file = os.path.join(data_dir, 'ai', 'position_values.txt')
 
     # load 
-    with open(position_stats_file, 'rb') as f:
-        text = f.read()
+    with open(position_stats_file, 'r') as f:
+        text = str(f.read())
 
     # for each position
     pos_stats = {}
     sections = text.split('\n\n')
     for section in sections:
-        #print section
         lines = section.strip().split('\n')
         pos = lines[0]
         freq = {}

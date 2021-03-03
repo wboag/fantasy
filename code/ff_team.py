@@ -99,7 +99,7 @@ class FantasyTeam:
 
             s += val
             if verbose:
-                print '%4s: %-20s -- %6.2f' % (position,name,val)
+                print('%4s: %-20s -- %6.2f' % (position,name,val))
 
         return s
 
@@ -383,7 +383,7 @@ def manual_create():
     p1.set_roster('DL2', sheard)
 
 
-    print p1.score(6, verbose=True)
+    print(p1.score(6, verbose=True))
 
 
 
@@ -395,7 +395,7 @@ def file_create():
     p1.load_from_file(team_file)
 
     #print p1
-    print p1.score(6, verbose=True)
+    print(p1.score(6, verbose=True))
 
 
 

@@ -16,13 +16,13 @@ def main():
     qb = Player(qb_file)
 
 
-    print 
-    print '%s (%s)' % (qb.name(), qb.id())
-    print qb.position()
+    print()
+    print('%s (%s)' % (qb.name(), qb.id()))
+    print(qb.position())
     for i in range(1,18):
         score = qb.score(i)
-        print '\tweek %2d: %6.2f' % (i,score)
-    print 
+        print('\tweek %2d: %6.2f' % (i,score))
+    print()
 
 
 

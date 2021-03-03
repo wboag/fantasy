@@ -4,11 +4,23 @@ import os
 import sys
 import re
 from collections import defaultdict
-from commands import getstatusoutput
+from subprocess import check_output, CalledProcessError, STDOUT
 
 from nfl_team import team_to_real_week
 import ff_team
 
+
+
+def getstatusoutput(cmd):
+    try:
+        data = check_output(cmd, shell=True, universal_newlines=True, stderr=STDOUT)
+        status = 0
+    except CalledProcessError as ex:
+        data = ex.output
+        status = ex.returncode
+    if data[-1:] == '\n':
+        data = data[:-1]
+    return status, data
 
 
 def main():
@@ -22,9 +34,9 @@ def main():
 
     pid = query_name(name, teams=teams, position=position)
 
-    print name
-    print teams
-    print pid
+    print(name)
+    print(teams)
+    print(pid)
 
 
 
@@ -56,7 +68,7 @@ def query_name(name, teams=None, position=None, year='*'):
         return p.pid
 
     elif len(candidates) == 0:
-        print 'NO MATCHES'
+        print('NO MATCHES')
         exit()
     else:
 
